@@ -1,4 +1,5 @@
 env/
 msgtb/
 *.tar
-*.txt
+*.swp
+*.md5

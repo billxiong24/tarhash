@@ -3,19 +3,32 @@ import hashlib
 import subprocess
 import sys
 import os
+import logging
+
+def generate_hashes(fd):
+    CHUNK_SIZE = 1024 * 100
+    calc_hash = hashlib.md5()
+    data = fd.read(CHUNK_SIZE)
+    while data:
+        calc_hash.update(data)
+        data = fd.read(CHUNK_SIZE)
+
+    fd.close()
+    return calc_hash.hexdigest()
 
 def write_tar_sums_file(in_dir, tar_file, out_file):
-    # tar -cvpf back.tar billxiong24/msgtb | xargs -I '{}' sh -c "test -f '{}' && md5sum '{}'" | cut -f 1 -d " "
-    cmd = "tar -cvpf %s %s | xargs -I '{}' sh -c \"test -f '{}' && md5sum '{}'\" | cut -f 1 -d ' ' | tee %s" % (tar_file, in_dir, out_file)
-    return subprocess.call(cmd, shell=True)
+    if not os.path.isdir(in_dir):
+        logging.error("Target directory %s does not exist." % (in_dir))
+        return 1
+    
+    cmd = "tar -cvpf %s %s | xargs -I '{}' sh -c \"test -f '{}' && md5sum '{}'\" | cut -f 1 -d ' ' > %s" % (tar_file, in_dir, out_file)
+    exit_code = subprocess.call(cmd, shell=True)
+    if exit_code == 0:
+        logging.info("Tar file and hash file successfully created.")
+    else:
+        logging.error("Something went wrong when creating tar file.")
 
-def make_tarfile(out_file, in_dir):
-    t = tarfile.open(out_file, "w:gz")
-    t.add(in_dir, arcname=os.path.basename(in_dir))
-    t.close()
-
-
-def calc_tar_sums(input_file, out_file=sys.stdout):
+def calc_tar_sums_from_tar(input_file, out_file=sys.stdout):
     out_fd = None
     if out_file is sys.stdout:
         out_fd = sys.stdout
@@ -25,10 +38,10 @@ def calc_tar_sums(input_file, out_file=sys.stdout):
     hashes = []
     try:
         if not tarfile.is_tarfile(input_file):
-            sys.stderr.write("File is not a tar file.\n")
+            logging.error("File is not a tar file.\n")
             return 1
     except IOError, e:
-        sys.stderr.write("File does not exist.\n")
+        logging.error("File does not exist.\n")
         return 2
 
     # file exists and is a tar file, open file in read and stream mode
@@ -43,9 +56,8 @@ def calc_tar_sums(input_file, out_file=sys.stdout):
         # not a regular file nor some link
         if fd is None:
             continue
-        fd.write(generate_hashes(fd))
+        out_fd.write(generate_hashes(fd) + "\n")
     return 0
 
 write_tar_sums_file("msgtb", "back.tar", "hashes.md5")
-sys.stdout.write("---------------\n")
-calc_tar_sums("back.tar")
+calc_tar_sums_from_tar("back.tar", "hash_sink.md5")
