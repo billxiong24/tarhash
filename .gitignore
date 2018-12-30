@@ -3,3 +3,4 @@ msgtb/
 *.tar
 *.swp
 *.md5
+*.pyc
