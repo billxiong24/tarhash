@@ -68,11 +68,16 @@ def calc_tar_sums_from_tar(input_file, out_file=sys.stdout):
     logging.info("Opened '%s' for reading..." % (input_file))
     # can't do getmembers, because that reads through the entire stream
     for member in tar_obj:
-        if not member.isfile():
+        if not os.path.isfile(member.name):
             continue
         # file exists, don't have to check for existence
         # can't do member.name, because that reads ahead of the stream
-        fd = tar_obj.extractfile(member)
+        fd = None
+        if member.isfile():
+            fd = tar_obj.extractfile(member)
+        elif member.issym():
+            fd = open(member.name)
+
         # not a regular file nor some link
         if fd is None:
             continue
@@ -84,5 +89,5 @@ def calc_tar_sums_from_tar(input_file, out_file=sys.stdout):
     out_fd.close()
     return 0
 
-# write_tar_sums_file("msgtb", "back2.tar", "hash_in.md5")
-# calc_tar_sums_from_tar("back2.tar", "hash_out.md5")
+#write_tar_sums_file("env", "back2.tar", "hash_in.md5")
+#calc_tar_sums_from_tar("back2.tar", "hash_out.md5")

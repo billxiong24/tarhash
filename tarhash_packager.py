@@ -58,8 +58,8 @@ def unpackage_and_verify_tar(tar_file):
     tar_obj.close()
 
     cmp_res = filecmp.cmp(hash_txt, calc_hash_fname)
-    #os.remove(calc_hash_fname)
-    #os.remove(hash_txt)
+    os.remove(calc_hash_fname)
+    os.remove(hash_txt)
 
     return cmp_res
 
