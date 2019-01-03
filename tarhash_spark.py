@@ -22,7 +22,9 @@ words = sc.parallelize(files).flatMap(lambda xs: [(xs[0] + os.sep + x) for x in 
 hashes = words.map(generate_hash).sortBy(lambda x: x, ascending=True)
 hashes.saveAsTextFile("hashes")
 
+
 t = tarfile.open("temp.tar", "w:gz")
 t.add("msgtb", arcname=os.path.basename("msgtb"))
-t.addfile(tarfile.TarInfo("hashes.txt"), open("hashes/part-00000"))
+t.add("hashes/part-00000")
+# t.addfile(tarfile.TarInfo("hashes.txt"), fd)
 t.close()
