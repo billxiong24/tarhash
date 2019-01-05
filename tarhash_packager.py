@@ -64,4 +64,4 @@ def unpackage_and_verify_tar(tar_file):
     return cmp_res
 
 package_dir("env", "content.tar")
-print unpackage_and_verify_tar("content.tar")
+# print unpackage_and_verify_tar("content.tar")
